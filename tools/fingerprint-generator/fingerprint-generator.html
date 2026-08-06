@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusAuthGuard - Fingerprint Generator Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; padding: 30px; }
+    .container { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+    h1 { color: #38bdf8; font-size: 24px; font-weight: 800; }
+    h3 { color: #38bdf8; }
+    p { color: #94a3b8; font-size: 14px; }
+    .step-label { display: inline-block; background: #1d4ed8; color: white; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-bottom: 6px; letter-spacing: .04em; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+    .hint { font-size: 11px; color: #64748b; }
+    input, textarea { background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; color: #fff; font-size: 13px; font-family: inherit; }
+    textarea { font-family: monospace; min-height: 140px; resize: vertical; }
+    button { background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    button:hover { background: #1d4ed8; }
+    button.secondary { background: #10b981; }
+    button.secondary:hover { background: #059669; }
+    button.ghost { background: #334155; }
+    button.ghost:hover { background: #475569; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    pre { background: #090d16; padding: 16px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #38bdf8; overflow-x: auto; max-height: 400px; white-space: pre-wrap; word-break: break-word; }
+    .status { font-size: 12px; padding: 8px 10px; border-radius: 6px; display: none; }
+    .status.error { background: #450a0a; color: #fca5a5; display: block; }
+    .status.ok { background: #052e16; color: #86efac; display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div>
+      <h1>🛠️ Official Portal Fingerprint Generator</h1>
+      <p>Generate normalized reference JSON fingerprints for college webmail, ERP, or scholarship portals.</p>
+    </div>
+
+    <div class="card">
+      <span class="step-label">STEP 1</span>
+      <h3>Extract live data from the real page</h3>
+      <p>
+        Open the actual official login page in a new tab → DevTools (F12) → Console →
+        paste <code>extract-on-page.js</code> → copy the JSON it prints, and paste it below.
+        This tool can't read another site's page itself (browser security blocks that);
+        the extraction has to run on the real page.
+      </p>
+      <div class="form-group">
+        <label>Extracted Page Data (from extract-on-page.js)</label>
+        <textarea id="extractedData" placeholder='Paste the JSON printed by extract-on-page.js here...'></textarea>
+        <span class="hint">Leave blank to fill formFingerprint/domFingerprint/visualFingerprint manually instead — a blank template will be used.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="step-label">STEP 2</span>
+      <h3>Add details that need a human's judgment</h3>
+      <p>These fields are deliberately manual — official domains especially should never be auto-detected, since the whole point is telling real domains from fake ones.</p>
+
+      <div class="form-group">
+        <label>College / Portal Name</label>
+        <input type="text" id="collegeName" value="St. Vincent Pallotti College of Engineering and Technology">
+      </div>
+      <div class="form-group">
+        <label>Official Domains / Contacts (comma separated)</label>
+        <input type="text" id="officialDomains" value="https://stvincentngp.edu.in/, https://erp.stvincentngp.edu.in/login.aspx, info@stvincentngp.edu.in">
+        <span class="hint">Verify each one via WHOIS / official college communication before trusting it.</span>
+      </div>
+      <div class="form-group">
+        <label>Official Page Title (override, optional)</label>
+        <input type="text" id="pageTitle" placeholder="Leave blank to use the title detected in Step 1">
+      </div>
+      <div class="form-group">
+        <label>Brand Keywords (comma separated)</label>
+        <input type="text" id="brandKeywords" value="St. Vincent Pallotti, Student Login, ERP Portal, Student Portal">
+      </div>
+
+      <div class="btn-row">
+        <button id="btnGenerate">⚡ Generate Fingerprint JSON</button>
+      </div>
+      <div id="status" class="status"></div>
+    </div>
+
+    <div class="card">
+      <h3>Generated Fingerprint JSON</h3>
+      <pre id="jsonOutput">// JSON output will appear here...</pre>
+      <div class="btn-row">
+        <button id="btnCopy" class="secondary">📋 Copy JSON</button>
+        <button id="btnDownload" class="ghost">⬇️ Download .json</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="generator.js"></script>
+</body>
+</html>

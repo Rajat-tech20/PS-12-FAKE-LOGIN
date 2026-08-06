@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "CampusAuthGuard - Cloned Login Detector",
+  "version": "1.0.0",
+  "description": "Real-time detection of cloned college webmail, ERP, and scholarship login pages targeting students.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CampusAuthGuard Safety Status"
+  },
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["src/ui/warningOverlay.css"],
+      "js": [
+        "src/scanner/domainChecker.js",
+        "src/scanner/similarityEngine.js",
+        "src/scanner/riskClassifier.js",
+        "src/ui/warningOverlay.js",
+        "src/content/extractFeatures.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/ui/warningOverlay.css",
+        "fingerprints/*.json"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

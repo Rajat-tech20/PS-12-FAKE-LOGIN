@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CampusAuthGuard Popup</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <svg class="shield-icon" viewBox="0 0 24 24">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-5.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+        </svg>
+        <span>CampusAuthGuard</span>
+      </div>
+      <span class="version-tag">v1.0 MVP</span>
+    </header>
+
+    <!-- Target Portal Selector -->
+    <div class="portal-selector-box">
+      <label for="portalSelect">Target Portal Fingerprint:</label>
+      <select id="portalSelect">
+        <option value="abc-college-erp">ABC College ERP Portal</option>
+        <option value="abc-college-webmail">ABC College Webmail</option>
+        <option value="abc-college-scholarship">ABC Scholarship Portal</option>
+      </select>
+    </div>
+
+    <!-- Security Status Banner -->
+    <div class="status-card" id="statusCard">
+      <div class="status-header">
+        <span class="status-badge" id="statusBadge">ANALYZING...</span>
+        <span class="score-pill" id="scorePill">0% Match</span>
+      </div>
+      <h3 class="status-title" id="statusTitle">Scanning Page...</h3>
+      <p class="status-desc" id="statusDesc">Analyzing DOM structure, forms, and domains.</p>
+    </div>
+
+    <!-- Domain Information Box -->
+    <div class="info-box">
+      <div class="info-row">
+        <span class="info-label">Active Hostname:</span>
+        <span class="info-val" id="activeDomain">--</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Trusted Domain:</span>
+        <span class="info-val good" id="officialDomain">--</span>
+      </div>
+    </div>
+
+    <!-- Detailed Scores -->
+    <div class="score-breakdown">
+      <h4>Similarity Score Breakdown</h4>
+      <div class="metric-row">
+        <span>Form Features (35%)</span>
+        <div class="bar-container"><div class="bar-fill" id="barForm" style="width: 0%;"></div></div>
+        <span class="metric-val" id="valForm">0%</span>
+      </div>
+      <div class="metric-row">
+        <span>DOM Structure (25%)</span>
+        <div class="bar-container"><div class="bar-fill" id="barDom" style="width: 0%;"></div></div>
+        <span class="metric-val" id="valDom">0%</span>
+      </div>
+      <div class="metric-row">
+        <span>Text & Brand (25%)</span>
+        <div class="bar-container"><div class="bar-fill" id="barText" style="width: 0%;"></div></div>
+        <span class="metric-val" id="valText">0%</span>
+      </div>
+      <div class="metric-row">
+        <span>Visual Style (15%)</span>
+        <div class="bar-container"><div class="bar-fill" id="barVisual" style="width: 0%;"></div></div>
+        <span class="metric-val" id="valVisual">0%</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn-rescan" id="btnRescan">🔄 Re-Scan Current Tab</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

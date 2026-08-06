@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Login Portal - Tech Campus</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
+    header { background-color: #1e293b; padding: 16px 32px; display: flex; align-items: center; border-bottom: 1px solid #334155; }
+    .college-name { font-size: 18px; font-weight: 700; color: #38bdf8; }
+    .main-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .login-card { background: #1e293b; border-radius: 12px; border: 1px solid #334155; width: 100%; max-width: 400px; padding: 32px; }
+    .login-card h2 { color: #f8fafc; font-size: 20px; margin-bottom: 8px; text-align: center; }
+    .login-card p { color: #94a3b8; font-size: 13px; margin-bottom: 24px; text-align: center; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 6px; }
+    .form-control { width: 100%; padding: 10px 12px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; color: #fff; }
+    .btn-login { width: 100%; background: #2563eb; color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    
+    /* Security Status Banner for Demo */
+    .demo-bar { background: #451a03; color: #fde68a; text-align: center; padding: 8px; font-size: 12px; border-bottom: 1px solid #78350f; }
+    .demo-bar span.badge { background: #f59e0b; color: #fff; padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 10px; }
+  </style>
+
+  <!-- Embed Extractor, Scanner & Warning Overlay for Direct Demo Testing -->
+  <link rel="stylesheet" href="../../extension/src/ui/warningOverlay.css">
+  <script src="../../extension/src/scanner/domainChecker.js"></script>
+  <script src="../../extension/src/scanner/similarityEngine.js"></script>
+  <script src="../../extension/src/scanner/riskClassifier.js"></script>
+  <script src="../../extension/src/ui/warningOverlay.js"></script>
+  <script src="../../extension/src/content/extractFeatures.js"></script>
+</head>
+<body>
+  <div class="demo-bar">
+    HACKATHON DEMO: <strong>Modified Lookalike Login Page</strong> | Hostname: <span>student-portal-auth.com</span> <span class="badge">SUSPICIOUS</span>
+  </div>
+
+  <header>
+    <div class="college-name">ABC College Student Access Portal</div>
+  </header>
+
+  <main class="main-container">
+    <div class="login-card">
+      <h2>Student Login</h2>
+      <p>Log in using your ABC College credentials</p>
+
+      <form action="/login" method="POST">
+        <div class="form-group">
+          <label>Username / Roll No</label>
+          <input type="text" class="form-control" placeholder="Roll No / Email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-control" placeholder="Password">
+        </div>
+        <button type="submit" class="btn-login">Sign In</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    window.CampusAuthGuardScanner = {
+      scanExtractedFeatures: function(features) {
+        const officialFingerprint = {
+          portalId: "abc-college-erp",
+          officialDomains: ["college.edu", "erp.college.edu"],
+          pageTitle: "ABC College ERP Login - Student & Staff Portal",
+          brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal"],
+          formFingerprint: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
+          domFingerprint: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"] },
+          visualFingerprint: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+        };
+
+        const mockUrl = "https://student-portal-auth.com/login";
+        const domainRes = DomainChecker.checkDomain(mockUrl, officialFingerprint.officialDomains);
+        const simRes = SimilarityEngine.calculateSimilarity(features, officialFingerprint);
+        const riskRes = RiskClassifier.classifyRisk(domainRes, simRes, features.hasPasswordField);
+        riskRes.similarityResult = simRes;
+
+        return { riskAssessment: riskRes, officialDomain: "erp.college.edu" };
+      }
+    };
+  </script>
+</body>
+</html>

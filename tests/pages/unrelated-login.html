@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CloudSync App Login</title>
+  <style>
+    body { background: #111827; color: #fff; font-family: system-ui; display: flex; height: 100vh; align-items: center; justify-content: center; }
+    .box { background: #1f2937; padding: 30px; border-radius: 12px; width: 320px; }
+    h3 { margin-bottom: 20px; }
+    input { width: 100%; padding: 10px; margin-bottom: 12px; background: #374151; border: none; border-radius: 6px; color: #fff; box-sizing: border-box; }
+    button { width: 100%; padding: 10px; background: #10b981; border: none; border-radius: 6px; color: #fff; font-weight: bold; }
+    .demo-bar { position: fixed; top: 0; left: 0; width: 100%; background: #111827; color: #9ca3af; text-align: center; padding: 8px; font-size: 12px; border-bottom: 1px solid #374151; }
+  </style>
+
+  <link rel="stylesheet" href="../../extension/src/ui/warningOverlay.css">
+  <script src="../../extension/src/scanner/domainChecker.js"></script>
+  <script src="../../extension/src/scanner/similarityEngine.js"></script>
+  <script src="../../extension/src/scanner/riskClassifier.js"></script>
+  <script src="../../extension/src/ui/warningOverlay.js"></script>
+  <script src="../../extension/src/content/extractFeatures.js"></script>
+</head>
+<body>
+  <div class="demo-bar">
+    HACKATHON DEMO: <strong>Unrelated Third-Party Login Page</strong> | Hostname: cloud-sync.io <span style="background:#6b7280; color:#fff; padding:2px 6px; border-radius:10px; font-size:10px;">NEUTRAL</span>
+  </div>
+
+  <div class="box">
+    <h3>CloudSync Dashboard</h3>
+    <form action="/auth">
+      <input type="text" placeholder="Account Email">
+      <input type="password" placeholder="CloudSync Key">
+      <button type="submit">Access Cloud</button>
+    </form>
+  </div>
+
+  <script>
+    window.CampusAuthGuardScanner = {
+      scanExtractedFeatures: function(features) {
+        const officialFingerprint = {
+          portalId: "abc-college-erp",
+          officialDomains: ["college.edu", "erp.college.edu"],
+          pageTitle: "ABC College ERP Login - Student & Staff Portal",
+          brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal"],
+          formFingerprint: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
+          domFingerprint: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"] },
+          visualFingerprint: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+        };
+
+        const mockUrl = "https://cloud-sync.io/login";
+        const domainRes = DomainChecker.checkDomain(mockUrl, officialFingerprint.officialDomains);
+        const simRes = SimilarityEngine.calculateSimilarity(features, officialFingerprint);
+        const riskRes = RiskClassifier.classifyRisk(domainRes, simRes, features.hasPasswordField);
+        riskRes.similarityResult = simRes;
+
+        return { riskAssessment: riskRes, officialDomain: "erp.college.edu" };
+      }
+    };
+  </script>
+</body>
+</html>
