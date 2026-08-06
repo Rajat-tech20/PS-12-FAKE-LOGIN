@@ -161,9 +161,14 @@
     if (!risk) return;
 
     if (risk.shouldWarn) {
-      // Inject CSS overlay if warning overlay module is available
+      // Inject Red Warning Overlay on Phishing / Suspicious pages
       if (window.CampusWarningOverlay) {
         window.CampusWarningOverlay.show(risk, officialDomain);
+      }
+    } else if (risk.level === 'SAFE') {
+      // Inject Automatic Green Safety Toast on Official Sites
+      if (window.CampusWarningOverlay && window.CampusWarningOverlay.showSafeNotification) {
+        window.CampusWarningOverlay.showSafeNotification(risk.title || 'Official College Portal Verified', officialDomain);
       }
     }
   }
@@ -173,6 +178,30 @@
     setTimeout(initScan, 300);
   } else {
     document.addEventListener('DOMContentLoaded', () => setTimeout(initScan, 300));
+  }
+
+  // Listen for messages from popup.js
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'RE_SCAN') {
+        const features = extractPageFeatures();
+        if (chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
+            sendResponse(response);
+          });
+          return true; // Async response
+        }
+      } else if (request.action === 'SHOW_OVERLAY') {
+        const features = extractPageFeatures();
+        if (chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
+            if (response && response.riskAssessment) {
+              handleScanResult(response.riskAssessment, response.officialDomain);
+            }
+          });
+        }
+      }
+    });
   }
 
   // Expose global extractor for manual trigger / testing

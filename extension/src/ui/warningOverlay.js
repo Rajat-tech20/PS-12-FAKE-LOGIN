@@ -1,6 +1,7 @@
 /**
- * Warning Overlay Injector Module
- * Displays an interactive red glassmorphic security warning on suspicious/cloned login pages.
+ * Security Overlay Injector Module
+ * Displays an interactive red glassmorphic security warning on dangerous pages,
+ * AND an automatic floating green safety toast when visiting official college portals.
  */
 
 (function () {
@@ -23,62 +24,44 @@
       backdrop.id = 'cag-overlay-root';
       backdrop.className = 'cag-overlay-backdrop';
 
-      const isDangerous = risk.level === 'DANGEROUS';
-      const badgeClass = isDangerous ? 'cag-badge' : 'cag-badge suspicious';
-      const badgeLabel = isDangerous ? `${risk.similarityScore || 90}% CLONE MATCH` : `${risk.similarityScore || 60}% SUSPICIOUS`;
-
       const safeRedirectUrl = officialDomain.startsWith('http') ? officialDomain : `https://${officialDomain}`;
 
       backdrop.innerHTML = `
         <div class="cag-warning-card">
-          <div class="cag-card-header">
-            <div class="cag-header-title">
-              <svg viewBox="0 0 24 24">
-                <path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-              </svg>
-              <span>${risk.title || 'Security Alert'}</span>
-            </div>
-            <span class="${badgeClass}">${badgeLabel}</span>
+          <div class="cag-icon-container">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 2L1 21h22L12 2zm1 14h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+            </svg>
           </div>
 
-          <div class="cag-description">
-            ${risk.description || 'This webpage appears to be a suspicious lookalike targeting college credentials.'}
+          <h2 class="cag-warning-title">Security Warning!</h2>
+
+          <div class="cag-warning-message">
+            ${risk.description || 'You are visiting an unverified domain that looks visually identical to your official college portal.'}
           </div>
 
           <div class="cag-domain-box">
             <div class="cag-domain-row">
-              <span class="cag-domain-label">Current Website (UNOFFICIAL):</span>
+              <span class="cag-domain-label">Current Hostname (UNTRUSTED):</span>
               <span class="cag-domain-value bad">${window.location.hostname}</span>
             </div>
             <div class="cag-domain-row">
               <span class="cag-domain-label">Official College Portal:</span>
               <span class="cag-domain-value good">${officialDomain}</span>
             </div>
+            <div class="cag-domain-row" style="margin-top: 4px;">
+              <span class="cag-domain-label">Similarity Match Score:</span>
+              <span class="cag-domain-value bad">${risk.similarityScore || 90}% CLONE MATCH</span>
+            </div>
           </div>
 
-          <div class="cag-actions">
+          <div class="cag-warning-actions">
             <a href="${safeRedirectUrl}" class="cag-btn-primary" id="cag-redirect-btn">
-              <span>🚀 Go to Official College Portal</span>
+              🚀 Take Me to Official Portal
             </a>
             <button class="cag-btn-secondary" id="cag-override-btn">
-              ⚠️ Proceed Anyway (I understand the risk)
+              Proceed Anyway (I Understand Risk)
             </button>
-          </div>
-
-          <span class="cag-details-toggle" id="cag-toggle-details">
-            🔍 Show Similarity Score Breakdown
-          </span>
-
-          <div class="cag-details-body" id="cag-details-content">
-            <div class="cag-score-grid">
-              <div class="cag-score-item">Form Similarity: <strong>${risk.similarityResult?.formScore ?? 95}%</strong></div>
-              <div class="cag-score-item">DOM Structure: <strong>${risk.similarityResult?.domScore ?? 80}%</strong></div>
-              <div class="cag-score-item">Brand Text Match: <strong>${risk.similarityResult?.textScore ?? 90}%</strong></div>
-              <div class="cag-score-item">Visual Style: <strong>${risk.similarityResult?.visualScore ?? 85}%</strong></div>
-            </div>
-            <div style="margin-top: 8px; color: #94a3b8;">
-              Weighted Score: ${risk.similarityScore || 0}% | Domain Verified: NO ❌
-            </div>
           </div>
         </div>
       `;
@@ -93,17 +76,42 @@
           this.remove();
         });
       }
+    }
 
-      const toggleDetails = document.getElementById('cag-toggle-details');
-      const detailsContent = document.getElementById('cag-details-content');
-      if (toggleDetails && detailsContent) {
-        toggleDetails.addEventListener('click', () => {
-          detailsContent.classList.toggle('show');
-          toggleDetails.innerText = detailsContent.classList.contains('show')
-            ? '▲ Hide Similarity Score Breakdown'
-            : '🔍 Show Similarity Score Breakdown';
-        });
-      }
+    /**
+     * Renders automatic floating green safety toast when visiting official site.
+     */
+    static showSafeNotification(title = "Official Portal Verified", officialDomain = "") {
+      const existing = document.getElementById('cag-safe-toast-root');
+      if (existing) existing.remove();
+
+      const toast = document.createElement('div');
+      toast.id = 'cag-safe-toast-root';
+      toast.className = 'cag-safe-toast';
+
+      const domainName = officialDomain || window.location.hostname;
+
+      toast.innerHTML = `
+        <div class="cag-safe-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="cag-safe-title">Official Portal Verified</div>
+          <div class="cag-safe-subtitle">Authentic College Portal (${domainName})</div>
+        </div>
+      `;
+
+      document.body.appendChild(toast);
+
+      // Auto dismiss after 4 seconds
+      setTimeout(() => {
+        if (toast && toast.parentNode) {
+          toast.style.animation = "cagFadeOut 0.4s ease forwards";
+          setTimeout(() => toast.remove(), 400);
+        }
+      }, 4000);
     }
 
     /**
@@ -113,6 +121,10 @@
       const existing = document.getElementById('cag-overlay-root');
       if (existing) {
         existing.remove();
+      }
+      const existingToast = document.getElementById('cag-safe-toast-root');
+      if (existingToast) {
+        existingToast.remove();
       }
     }
   }

@@ -4,34 +4,24 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const statusCard = document.getElementById('statusCard');
-  const statusBadge = document.getElementById('statusBadge');
-  const scorePill = document.getElementById('scorePill');
-  const statusTitle = document.getElementById('statusTitle');
-  const statusDesc = document.getElementById('statusDesc');
-  const activeDomain = document.getElementById('activeDomain');
-  const officialDomain = document.getElementById('officialDomain');
+  const statusSection = document.getElementById('statusSection');
+  const shieldIcon = document.getElementById('shieldIcon');
+  const statusText = document.getElementById('statusText');
+  const statusDomain = document.getElementById('statusDomain');
 
-  const barForm = document.getElementById('barForm');
-  const barDom = document.getElementById('barDom');
-  const barText = document.getElementById('barText');
-  const barVisual = document.getElementById('barVisual');
-
-  const valForm = document.getElementById('valForm');
-  const valDom = document.getElementById('valDom');
-  const valText = document.getElementById('valText');
-  const valVisual = document.getElementById('valVisual');
-
-  const portalSelect = document.getElementById('portalSelect');
-  const btnRescan = document.getElementById('btnRescan');
+  const lblDomain = document.getElementById('lblDomain');
+  const badgeDomain = document.getElementById('badgeDomain');
+  const badgeScore = document.getElementById('badgeScore');
+  const badgePass = document.getElementById('badgePass');
+  const btnToggleOverlay = document.getElementById('btnToggleOverlay');
 
   /**
    * Updates Popup UI with scan result payload
    */
   function renderScanData(data) {
     if (!data || !data.riskAssessment) {
-      statusTitle.innerText = "No Login Page Detected";
-      statusDesc.innerText = "Navigate to a college login portal or open demo test page.";
+      statusText.innerText = "No Login Page";
+      statusDomain.innerText = "Navigate to a college portal or open demo.";
       return;
     }
 
@@ -39,37 +29,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const sim = risk.similarityResult || {};
     const domain = risk.domainResult || {};
 
-    // 1. Badge & Header
-    statusBadge.innerText = risk.badgeText || "OK";
-    scorePill.innerText = `${risk.similarityScore || 0}% Match`;
-    statusTitle.innerText = risk.title || "Page Status";
-    statusDesc.innerText = risk.description || "";
+    // 1. Domain & Text
+    statusDomain.innerText = domain.hostname || "unknown-domain.com";
 
-    // Card Theme
-    statusCard.className = "status-card";
-    if (risk.level === 'SAFE') statusCard.classList.add('safe');
-    else if (risk.level === 'DANGEROUS') statusCard.classList.add('danger');
-    else if (risk.level === 'SUSPICIOUS') statusCard.classList.add('warn');
+    // 2. Risk Level Styling
+    if (risk.level === 'SAFE') {
+      statusSection.className = "status-section safe";
+      shieldIcon.className = "shield-icon safe-shield";
+      statusText.innerText = "Authentic Portal";
 
-    // 2. Domains
-    activeDomain.innerText = domain.hostname || "--";
-    officialDomain.innerText = data.officialDomain || "erp.college.edu";
+      lblDomain.innerText = "Official Domain";
+      badgeDomain.innerText = "VERIFIED ✅";
+      badgeDomain.style.background = "rgba(16, 185, 129, 0.15)";
+      badgeDomain.style.color = "#10b981";
 
-    // 3. Metric Bars
-    const fScore = sim.formScore ?? 0;
-    const dScore = sim.domScore ?? 0;
-    const tScore = sim.textScore ?? 0;
-    const vScore = sim.visualScore ?? 0;
+      if (btnToggleOverlay) btnToggleOverlay.style.display = "none";
+    } else if (risk.level === 'DANGEROUS') {
+      statusSection.className = "status-section danger";
+      shieldIcon.className = "shield-icon danger-shield";
+      statusText.innerText = "Phishing Threat Detected";
 
-    barForm.style.width = `${fScore}%`;
-    barDom.style.width = `${dScore}%`;
-    barText.style.width = `${tScore}%`;
-    barVisual.style.width = `${vScore}%`;
+      lblDomain.innerText = "Spoof Domain";
+      badgeDomain.innerText = "UNAUTHORIZED ❌";
+      badgeDomain.style.background = "rgba(239, 68, 68, 0.15)";
+      badgeDomain.style.color = "#ef4444";
 
-    valForm.innerText = `${fScore}%`;
-    valDom.innerText = `${dScore}%`;
-    valText.innerText = `${tScore}%`;
-    valVisual.innerText = `${vScore}%`;
+      if (btnToggleOverlay) btnToggleOverlay.style.display = "block";
+    } else if (risk.level === 'SUSPICIOUS') {
+      statusSection.className = "status-section warn";
+      shieldIcon.className = "shield-icon warn-shield";
+      statusText.innerText = "Suspicious Lookalike";
+
+      lblDomain.innerText = "Unverified Domain";
+      badgeDomain.innerText = "CAUTION ⚠️";
+      badgeDomain.style.background = "rgba(245, 158, 11, 0.15)";
+      badgeDomain.style.color = "#f59e0b";
+
+      if (btnToggleOverlay) btnToggleOverlay.style.display = "block";
+    } else {
+      statusSection.className = "status-section";
+      shieldIcon.className = "shield-icon safe-shield";
+      statusText.innerText = "Unrelated Page";
+
+      lblDomain.innerText = "Standard Domain";
+      badgeDomain.innerText = "OK";
+      badgeDomain.style.background = "rgba(148, 163, 184, 0.15)";
+      badgeDomain.style.color = "#94a3b8";
+
+      if (btnToggleOverlay) btnToggleOverlay.style.display = "none";
+    }
+
+    // 3. Metrics
+    const matchScore = risk.similarityScore ?? sim.finalScore ?? 0;
+    badgeScore.innerText = `${matchScore}% MATCH`;
+
+    if (data.features && data.features.hasPasswordField) {
+      badgePass.innerText = "DETECTED";
+      badgePass.style.background = "rgba(245, 158, 11, 0.15)";
+      badgePass.style.color = "#f59e0b";
+    } else {
+      badgePass.innerText = "NONE";
+      badgePass.style.background = "rgba(148, 163, 184, 0.15)";
+      badgePass.style.color = "#94a3b8";
+    }
   }
 
   /**
@@ -83,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response) {
               renderScanData(response);
             } else {
-              // Fallback to latest stored scan
               chrome.runtime.sendMessage({ action: "GET_LATEST_SCAN" }, renderScanData);
             }
           });
@@ -100,8 +121,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Event Listeners
-  if (btnRescan) {
-    btnRescan.addEventListener('click', fetchActiveTabScan);
+  // Toggle Overlay button
+  if (btnToggleOverlay) {
+    btnToggleOverlay.addEventListener('click', () => {
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0] && tabs[0].id) {
+            chrome.tabs.sendMessage(tabs[0].id, { action: "SHOW_OVERLAY" });
+          }
+        });
+      }
+    });
   }
 });

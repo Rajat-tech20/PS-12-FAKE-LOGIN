@@ -44,6 +44,21 @@ const DEFAULT_FINGERPRINT = {
 
 let currentFingerprint = DEFAULT_FINGERPRINT;
 
+// Load fingerprint.json from extension storage on startup
+if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+  try {
+    fetch(chrome.runtime.getURL('fingerprints/fingerprint.json'))
+      .then(res => res.json())
+      .then(fp => {
+        if (fp && fp.officialDomains) {
+          currentFingerprint = fp;
+          console.log("Loaded default college fingerprint:", fp.collegeName || fp.portalName);
+        }
+      })
+      .catch(() => {});
+  } catch (e) {}
+}
+
 /**
  * Message Handler from Content Script & Popup
  */
