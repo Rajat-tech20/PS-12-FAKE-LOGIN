@@ -1,4 +1,4 @@
-/* CampusAuthGuard Warning Overlay & Safe Toast Styling - React Theme Aligned */
+/* CampusAuthGuard Toast Notifications & Overlay Styling - React Theme Aligned */
 
 .cag-overlay-backdrop {
   position: fixed !important;
@@ -171,7 +171,20 @@
 }
 
 /* ========================================= */
-/* Floating Safe Toast Notification          */
+/* Toast Animations                          */
+/* ========================================= */
+@keyframes cagSlideInRight {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes cagFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ========================================= */
+/* Floating Safe Toast Notification (Green)  */
 /* ========================================= */
 .cag-safe-toast {
   position: fixed !important;
@@ -192,16 +205,6 @@
   animation: cagSlideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
 
-@keyframes cagSlideInRight {
-  from { transform: translateX(120%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes cagFadeOut {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-10px); }
-}
-
 .cag-safe-icon {
   width: 32px !important;
   height: 32px !important;
@@ -220,6 +223,50 @@
 }
 
 .cag-safe-subtitle {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+}
+
+/* ========================================= */
+/* Floating Unsafe Toast Notification (Red)  */
+/* ========================================= */
+.cag-unsafe-toast {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(239, 68, 68, 0.6) !important;
+  border-radius: 12px !important;
+  padding: 12px 18px !important;
+  box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.3) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  color: #f8fafc !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  animation: cagSlideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+.cag-unsafe-icon {
+  width: 32px !important;
+  height: 32px !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.cag-unsafe-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ef4444 !important;
+}
+
+.cag-unsafe-subtitle {
   font-size: 11px !important;
   color: #94a3b8 !important;
 }

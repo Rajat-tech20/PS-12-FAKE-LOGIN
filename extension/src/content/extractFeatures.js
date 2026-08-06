@@ -161,12 +161,12 @@
     if (!risk) return;
 
     if (risk.shouldWarn) {
-      // Inject Red Warning Overlay on Phishing / Suspicious pages
-      if (window.CampusWarningOverlay) {
-        window.CampusWarningOverlay.show(risk, officialDomain);
+      // Inject Automatic Red Unsafe Toast Popup on Phishing / Suspicious pages
+      if (window.CampusWarningOverlay && window.CampusWarningOverlay.showUnsafeNotification) {
+        window.CampusWarningOverlay.showUnsafeNotification(risk.title || 'Unsafe Phishing Threat Detected', window.location.hostname, risk.similarityScore);
       }
     } else if (risk.level === 'SAFE') {
-      // Inject Automatic Green Safety Toast on Official Sites
+      // Inject Automatic Green Safety Toast Popup on Official Sites
       if (window.CampusWarningOverlay && window.CampusWarningOverlay.showSafeNotification) {
         window.CampusWarningOverlay.showSafeNotification(risk.title || 'Official College Portal Verified', officialDomain);
       }
