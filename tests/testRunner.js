@@ -8,50 +8,51 @@ const SimilarityEngine = require('../extension/src/scanner/similarityEngine.js')
 const RiskClassifier = require('../extension/src/scanner/riskClassifier.js');
 
 const officialFingerprint = {
-  portalId: "abc-college-erp",
-  officialDomains: ["college.edu", "erp.college.edu", "localhost", "127.0.0.1"],
-  pageTitle: "ABC College ERP Login - Student & Staff Portal",
-  brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal", "Roll Number"],
-  formFingerprint: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
-  domFingerprint: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: true },
-  visualFingerprint: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+  portalId: "st-vincent-erp",
+  collegeName: "St. Vincent Pallotti College of Engineering and Technology",
+  officialDomains: ["stvincentngp.edu.in", "erp.stvincentngp.edu.in", "localhost", "127.0.0.1"],
+  pageTitle: "log-CAS_ERP",
+  brandKeywords: ["St. Vincent Pallotti", "Student Login", "ERP Portal", "Student Portal", "College Administration System"],
+  formFingerprint: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 14, buttonTexts: ["Login", "Reset"] },
+  domFingerprint: { inputTypes: ["hidden", "text", "password", "submit"], formAction: "./login.aspx", formMethod: "POST" },
+  visualFingerprint: { dominantColors: ["#ffffff"], headingText: "College Administration System" }
 };
 
 const testVectors = [
   {
     name: "1. Official ERP Portal Login",
-    url: "https://erp.college.edu/login",
+    url: "https://erp.stvincentngp.edu.in/login.aspx",
     expectedLevel: "SAFE",
     features: {
       hasPasswordField: true,
-      formFeatures: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
-      domFeatures: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: true },
-      textFeatures: { pageTitle: "ABC College ERP Login - Student & Staff Portal", visibleText: "ABC College ERP Portal Roll Number Email Sign In to ERP" },
-      visualFeatures: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+      formFeatures: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 14, buttonTexts: ["Login", "Reset"] },
+      domFeatures: { inputTypes: ["hidden", "text", "password", "submit"], formAction: "./login.aspx", formMethod: "POST" },
+      textFeatures: { pageTitle: "log-CAS_ERP", visibleText: "St. Vincent Pallotti College Administration System Username Password Login Reset" },
+      visualFeatures: { dominantColors: ["#ffffff"], headingText: "College Administration System" }
     }
   },
   {
     name: "2. Exact Cloned Phishing Page",
-    url: "https://abc-college-login.netlify.app/login",
+    url: "https://stvincentngp-erp-login.netlify.app/login.aspx",
     expectedLevel: "DANGEROUS",
     features: {
       hasPasswordField: true,
-      formFeatures: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
-      domFeatures: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: true },
-      textFeatures: { pageTitle: "ABC College ERP Login - Student & Staff Portal", visibleText: "ABC College ERP Portal Roll Number Email Sign In to ERP" },
-      visualFeatures: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+      formFeatures: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 14, buttonTexts: ["Login", "Reset"] },
+      domFeatures: { inputTypes: ["hidden", "text", "password", "submit"], formAction: "./login.aspx", formMethod: "POST" },
+      textFeatures: { pageTitle: "log-CAS_ERP", visibleText: "St. Vincent Pallotti College Administration System Username Password Login Reset" },
+      visualFeatures: { dominantColors: ["#ffffff"], headingText: "College Administration System" }
     }
   },
   {
     name: "3. Subdomain Spoofing Attack",
-    url: "https://erp.college.edu.phishing-server.com/login",
+    url: "https://erp.stvincentngp.edu.in.phishing-server.com/login.aspx",
     expectedLevel: "DANGEROUS",
     features: {
       hasPasswordField: true,
-      formFeatures: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In to ERP"] },
-      domFeatures: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: true },
-      textFeatures: { pageTitle: "ABC College ERP Login - Student & Staff Portal", visibleText: "ABC College ERP Portal Roll Number Email Sign In to ERP" },
-      visualFeatures: { dominantColors: ["#003366", "#ffffff", "#f4f6f9"], headingText: "ABC College ERP Portal" }
+      formFeatures: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 14, buttonTexts: ["Login", "Reset"] },
+      domFeatures: { inputTypes: ["hidden", "text", "password", "submit"], formAction: "./login.aspx", formMethod: "POST" },
+      textFeatures: { pageTitle: "log-CAS_ERP", visibleText: "St. Vincent Pallotti College Administration System Username Password Login Reset" },
+      visualFeatures: { dominantColors: ["#ffffff"], headingText: "College Administration System" }
     }
   },
   {
@@ -60,10 +61,10 @@ const testVectors = [
     expectedLevel: "SUSPICIOUS",
     features: {
       hasPasswordField: true,
-      formFeatures: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 3, buttonTexts: ["Sign In"] },
-      domFeatures: { tagSequence: ["div", "h2", "form", "input", "input", "button"], inputTypes: ["text", "password", "submit"], hasLogo: false },
-      textFeatures: { pageTitle: "Student Login Portal - Tech Campus", visibleText: "ABC College Student Access Portal Roll No Email Sign In" },
-      visualFeatures: { dominantColors: ["#0f172a", "#1e293b"], headingText: "Student Login" }
+      formFeatures: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 14, buttonTexts: ["Login"] },
+      domFeatures: { inputTypes: ["text", "password", "submit"] },
+      textFeatures: { pageTitle: "Student Login Portal", visibleText: "St. Vincent Pallotti Student Access Portal Roll No Password Login" },
+      visualFeatures: { dominantColors: ["#0f172a"], headingText: "Student Login" }
     }
   },
   {
@@ -72,10 +73,10 @@ const testVectors = [
     expectedLevel: "UNRELATED",
     features: {
       hasPasswordField: true,
-      formFeatures: { passwordFieldCount: 1, emailOrTextFieldCount: 1, inputCount: 2, buttonTexts: ["Access Cloud"] },
-      domFeatures: { tagSequence: ["div", "h3", "form", "input", "input", "button"], inputTypes: ["text", "password"], hasLogo: false },
+      formFeatures: { passwordFieldCount: 1, emailFieldCount: 0, inputCount: 2, buttonTexts: ["Access Cloud"] },
+      domFeatures: { inputTypes: ["text", "password"] },
       textFeatures: { pageTitle: "CloudSync App Login", visibleText: "CloudSync Dashboard Account Email CloudSync Key Access Cloud" },
-      visualFeatures: { dominantColors: ["#111827", "#1f2937"], headingText: "CloudSync Dashboard" }
+      visualFeatures: { dominantColors: ["#111827"], headingText: "CloudSync Dashboard" }
     }
   }
 ];

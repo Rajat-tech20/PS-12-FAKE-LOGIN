@@ -1,10 +1,10 @@
 /**
  * Background Service Worker: background.js
- * Manages official fingerprints, listens for content script scan events, runs scoring pipeline,
- * and updates Chrome extension badges and storage.
+ * Manages multi-portal reference fingerprints, listens for content script scan events,
+ * runs multi-fingerprint scoring pipeline, and updates Chrome extension badges.
  */
 
-// Import Scanner Modules if running in ES Module or background context
+// Import Scanner Modules
 try {
   importScripts(
     '../scanner/domainChecker.js',
@@ -15,22 +15,51 @@ try {
   // ESM / Bundler fallback
 }
 
-// Default Official Fingerprint Fallback
-const DEFAULT_FINGERPRINT = {
+// 1. St. Vincent Pallotti College Reference Fingerprint
+const ST_VINCENT_FINGERPRINT = {
+  portalId: "st-vincent-erp",
+  portalName: "College Administration System (CAS ERP)",
+  collegeName: "St. Vincent Pallotti College of Engineering and Technology",
+  officialDomains: ["stvincentngp.edu.in", "erp.stvincentngp.edu.in", "localhost", "127.0.0.1"],
+  pageTitle: "log-CAS_ERP",
+  brandKeywords: ["St. Vincent Pallotti", "Student Login", "ERP Portal", "Student Portal", "College Administration System"],
+  formFingerprint: {
+    passwordFieldCount: 1,
+    emailFieldCount: 0,
+    inputCount: 14,
+    buttonTexts: ["Login", "Reset"],
+    placeholders: ["Username", "Password"]
+  },
+  domFingerprint: {
+    inputTypes: ["hidden", "text", "password", "submit"],
+    formAction: "./login.aspx",
+    formMethod: "POST"
+  },
+  visualFingerprint: {
+    layoutType: "centered-login-card",
+    dominantColors: ["#ffffff"],
+    logoAltText: "",
+    headingText: "College Administration System"
+  }
+};
+
+// 2. ABC College Reference Fingerprint
+const ABC_COLLEGE_FINGERPRINT = {
   portalId: "abc-college-erp",
   portalName: "ABC College ERP Portal",
-  officialDomains: ["college.edu", "erp.college.edu", "mail.college.edu", "localhost", "127.0.0.1"],
+  collegeName: "ABC College of Technology",
+  officialDomains: ["college.edu", "erp.college.edu"],
   pageTitle: "ABC College ERP Login - Student & Staff Portal",
-  brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal", "Roll Number", "Sign In"],
+  brandKeywords: ["ABC College", "College of Technology", "Student Login", "ERP Portal", "Roll Number", "Sign In to ERP"],
   formFingerprint: {
     passwordFieldCount: 1,
     emailOrTextFieldCount: 1,
     inputCount: 3,
-    buttonTexts: ["Login", "Sign In to ERP"],
+    buttonTexts: ["Sign In to ERP"],
     placeholders: ["Enter Roll No / Email", "Enter Password"]
   },
   domFingerprint: {
-    tagSequence: ["div", "img", "h2", "form", "input", "input", "button"],
+    tagSequence: ["div", "h2", "form", "input", "input", "button"],
     inputTypes: ["text", "password", "submit"],
     hasLogo: true,
     hasForgotPasswordLink: true
@@ -42,21 +71,25 @@ const DEFAULT_FINGERPRINT = {
   }
 };
 
-let currentFingerprint = DEFAULT_FINGERPRINT;
+let knownFingerprints = [ST_VINCENT_FINGERPRINT, ABC_COLLEGE_FINGERPRINT];
 
-// Load fingerprint.json from extension storage on startup
+// Load fingerprint JSONs dynamically from extension package
 if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-  try {
-    fetch(chrome.runtime.getURL('fingerprints/fingerprint.json'))
+  const loadFp = (file) => {
+    fetch(chrome.runtime.getURL(`fingerprints/${file}`))
       .then(res => res.json())
       .then(fp => {
         if (fp && fp.officialDomains) {
-          currentFingerprint = fp;
-          console.log("Loaded default college fingerprint:", fp.collegeName || fp.portalName);
+          const idx = knownFingerprints.findIndex(f => f.portalId === fp.portalId || f.portalName === fp.portalName);
+          if (idx >= 0) knownFingerprints[idx] = fp;
+          else knownFingerprints.push(fp);
         }
       })
       .catch(() => {});
-  } catch (e) {}
+  };
+
+  loadFp('fingerprint.json');
+  loadFp('abc-college-erp.json');
 }
 
 /**
@@ -93,7 +126,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
       }
     } else if (request.action === 'SET_PORTAL_FINGERPRINT') {
       if (request.fingerprint) {
-        currentFingerprint = request.fingerprint;
+        knownFingerprints.unshift(request.fingerprint);
         sendResponse({ status: 'success' });
       }
     }
@@ -101,21 +134,41 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 }
 
 /**
- * Core Processing Pipeline
+ * Multi-Fingerprint Processing Pipeline
+ * Evaluates active page against ALL registered college fingerprints and finds highest risk / match
  */
 function processScan(features) {
-  const domainRes = DomainChecker.checkDomain(features.url, currentFingerprint.officialDomains);
-  const similarityRes = SimilarityEngine.calculateSimilarity(features, currentFingerprint);
-  const riskRes = RiskClassifier.classifyRisk(domainRes, similarityRes, features.hasPasswordField);
+  let bestScanResult = null;
+  let highestScore = -1;
 
-  // Attach full similarity breakdown to risk object
-  riskRes.similarityResult = similarityRes;
-  riskRes.domainResult = domainRes;
+  for (const fp of knownFingerprints) {
+    const domainRes = DomainChecker.checkDomain(features.url, fp.officialDomains);
+    const similarityRes = SimilarityEngine.calculateSimilarity(features, fp);
+    const riskRes = RiskClassifier.classifyRisk(domainRes, similarityRes, features.hasPasswordField);
 
-  return {
-    riskAssessment: riskRes,
-    officialDomain: currentFingerprint.officialDomains[0] || "erp.college.edu",
-    portalName: currentFingerprint.portalName || "ABC College ERP",
+    riskRes.similarityResult = similarityRes;
+    riskRes.domainResult = domainRes;
+
+    // Weight score: official domain or high-risk clone gets priority evaluation
+    let effectiveRank = similarityRes.finalScore;
+    if (domainRes.isOfficial) effectiveRank += 200;
+    else if (riskRes.shouldWarn) effectiveRank += 100;
+
+    if (effectiveRank > highestScore) {
+      highestScore = effectiveRank;
+      bestScanResult = {
+        riskAssessment: riskRes,
+        officialDomain: fp.officialDomains[0] || "erp.college.edu",
+        portalName: fp.portalName || fp.collegeName || "College ERP Portal",
+        features
+      };
+    }
+  }
+
+  return bestScanResult || {
+    riskAssessment: { level: 'UNRELATED', category: 'NEUTRAL', similarityScore: 0, shouldWarn: false },
+    officialDomain: "stvincentngp.edu.in",
+    portalName: "College Portal",
     features
   };
 }
@@ -126,8 +179,8 @@ function processScan(features) {
 function updateBadge(tabId, risk) {
   if (!chrome.action) return;
 
-  const text = risk.badgeText || 'OK';
-  const color = risk.badgeColor || '#10b981';
+  const text = risk.badgeText !== undefined ? risk.badgeText : (risk.level === 'SAFE' ? 'SAFE' : risk.shouldWarn ? 'UNSAFE' : '');
+  const color = risk.badgeColor || (risk.level === 'SAFE' ? '#10b981' : '#ef4444');
 
   chrome.action.setBadgeText({ tabId, text });
   chrome.action.setBadgeBackgroundColor({ tabId, color });
@@ -137,6 +190,6 @@ function updateBadge(tabId, risk) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     processScan,
-    DEFAULT_FINGERPRINT
+    knownFingerprints
   };
 }

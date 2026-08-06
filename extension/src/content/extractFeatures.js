@@ -173,11 +173,28 @@
     }
   }
 
-  // Run initial scan on load and when DOM mutates
+  // Run initial scan on load
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     setTimeout(initScan, 300);
   } else {
     document.addEventListener('DOMContentLoaded', () => setTimeout(initScan, 300));
+  }
+
+  // MutationObserver for dynamic login form / modal rendering
+  let scanDebounceTimer = null;
+  const observer = new MutationObserver(() => {
+    if (document.querySelector('input[type="password"]') || document.querySelector('form')) {
+      clearTimeout(scanDebounceTimer);
+      scanDebounceTimer = setTimeout(initScan, 600);
+    }
+  });
+
+  if (document.body) {
+    observer.observe(document.body, { childList: true, subtree: true });
+  } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
   }
 
   // Listen for messages from popup.js
