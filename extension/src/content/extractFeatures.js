@@ -137,16 +137,23 @@
     const extractedFeatures = extractPageFeatures();
 
     // Send payload to background script (or handle directly if injected in page)
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-      chrome.runtime.sendMessage(
-        { action: "SCAN_PAGE", payload: extractedFeatures },
-        (response) => {
-          if (chrome.runtime.lastError) return;
-          if (response && response.riskAssessment) {
-            handleScanResult(response.riskAssessment, response.officialDomain);
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+      try {
+        chrome.runtime.sendMessage(
+          { action: "SCAN_PAGE", payload: extractedFeatures },
+          (response) => {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) return;
+            if (response && response.riskAssessment) {
+              handleScanResult(response.riskAssessment, response.officialDomain);
+            }
           }
+        );
+      } catch (e) {
+        // Extension context invalidated (e.g. extension was reloaded or updated)
+        if (typeof observer !== 'undefined' && observer.disconnect) {
+          observer.disconnect();
         }
-      );
+      }
     } else if (window.CampusAuthGuardScanner) {
       // Direct window integration for hackathon test launcher demo
       const result = window.CampusAuthGuardScanner.scanExtractedFeatures(extractedFeatures);
@@ -198,27 +205,35 @@
   }
 
   // Listen for messages from popup.js
-  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
-    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-      if (request.action === 'RE_SCAN') {
-        const features = extractPageFeatures();
-        if (chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
-            sendResponse(response);
-          });
-          return true; // Async response
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.id && chrome.runtime.onMessage) {
+    try {
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === 'RE_SCAN') {
+          const features = extractPageFeatures();
+          if (chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+            try {
+              chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
+                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) return;
+                sendResponse(response);
+              });
+              return true; // Async response
+            } catch (e) {}
+          }
+        } else if (request.action === 'SHOW_OVERLAY') {
+          const features = extractPageFeatures();
+          if (chrome.runtime && chrome.runtime.id && chrome.runtime.sendMessage) {
+            try {
+              chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
+                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) return;
+                if (response && response.riskAssessment) {
+                  handleScanResult(response.riskAssessment, response.officialDomain);
+                }
+              });
+            } catch (e) {}
+          }
         }
-      } else if (request.action === 'SHOW_OVERLAY') {
-        const features = extractPageFeatures();
-        if (chrome.runtime && chrome.runtime.sendMessage) {
-          chrome.runtime.sendMessage({ action: "SCAN_PAGE", payload: features }, (response) => {
-            if (response && response.riskAssessment) {
-              handleScanResult(response.riskAssessment, response.officialDomain);
-            }
-          });
-        }
-      }
-    });
+      });
+    } catch (e) {}
   }
 
   // Expose global extractor for manual trigger / testing

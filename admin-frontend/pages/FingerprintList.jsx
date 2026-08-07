@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "../lib/supabaseClient";
+import { fetchAllFingerprints, toggleFingerprintPublish } from "../lib/fingerprintStore";
 import { useAuth } from "../context/AuthContext";
 
 export default function FingerprintList() {
@@ -11,31 +11,28 @@ export default function FingerprintList() {
 
   async function loadFingerprints() {
     setLoading(true);
+    setError("");
     try {
-      let query = supabase.from("fingerprints").select("*").order("updated_at", { ascending: false });
-      if (!isSuperAdmin && profile?.college_id) query = query.eq("college_id", profile.college_id);
-
-      const { data, error } = await query;
-      if (error) setError(error.message);
-      else setRows(data || []);
+      const data = await fetchAllFingerprints(profile?.college_id, isSuperAdmin);
+      setRows(data || []);
     } catch (e) {
-      setError(e.message);
+      setError(e.message || "Failed to load fingerprints");
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (profile) loadFingerprints();
-  }, [profile]);
+    loadFingerprints();
+  }, [profile, isSuperAdmin]);
 
-  async function togglePublish(row) {
-    const { error } = await supabase
-      .from("fingerprints")
-      .update({ is_published: !row.is_published })
-      .eq("id", row.id);
-    if (error) setError(error.message);
-    else loadFingerprints();
+  async function handleTogglePublish(row) {
+    try {
+      const updated = await toggleFingerprintPublish(row);
+      setRows(prev => prev.map(r => String(r.id) === String(row.id) ? updated : r));
+    } catch (err) {
+      setError(err.message || "Failed to update publish state");
+    }
   }
 
   return (
@@ -121,7 +118,7 @@ export default function FingerprintList() {
                         <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
                         Edit
                       </Link>
-                      <button onClick={() => togglePublish(row)} className="m3-btn m3-btn-tonal" style={{ padding: "6px 14px", fontSize: 12 }}>
+                      <button onClick={() => handleTogglePublish(row)} className="m3-btn m3-btn-tonal" style={{ padding: "6px 14px", fontSize: 12 }}>
                         {row.is_published ? "Unpublish" : "Publish"}
                       </button>
                       <Link to={`/admin/audit-log?fingerprint_id=${row.id}`} className="m3-btn m3-btn-outlined" style={{ padding: "6px 14px", fontSize: 12 }}>

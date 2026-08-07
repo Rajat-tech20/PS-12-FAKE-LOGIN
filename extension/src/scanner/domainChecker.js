@@ -10,12 +10,27 @@ class DomainChecker {
    * @returns {string} normalized hostname
    */
   static getHostname(rawUrl) {
-    try {
-      const parsed = new URL(rawUrl);
-      return parsed.hostname.toLowerCase().trim();
-    } catch (e) {
-      return rawUrl.toLowerCase().trim();
+    if (!rawUrl) return "";
+    let str = String(rawUrl).trim().toLowerCase();
+    
+    // Handle email addresses (e.g., info@stvincentngp.edu.in -> stvincentngp.edu.in)
+    if (str.includes("@")) {
+      str = str.split("@").pop();
     }
+    
+    // Handle full URLs (e.g., https://erp.stvincentngp.edu.in/login.aspx -> erp.stvincentngp.edu.in)
+    if (str.startsWith("http://") || str.startsWith("https://")) {
+      try {
+        const parsed = new URL(str);
+        return parsed.hostname.toLowerCase().trim();
+      } catch (e) {
+        // Fallback below
+      }
+    }
+
+    // Strip trailing path/port if any remains
+    str = str.replace(/^(https?:\/\/)?/, "").split("/")[0].split(":")[0];
+    return str.trim();
   }
 
   /**
@@ -104,6 +119,12 @@ class DomainChecker {
   }
 }
 
+function isOfficialDomain(currentHostname, officialDomainsList = []) {
+  const result = DomainChecker.checkDomain(currentHostname, officialDomainsList);
+  return result.isOfficial;
+}
+
 if (typeof module !== "undefined" && module.exports) {
   module.exports = DomainChecker;
+  module.exports.isOfficialDomain = isOfficialDomain;
 }

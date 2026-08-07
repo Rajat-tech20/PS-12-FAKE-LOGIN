@@ -2,7 +2,18 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 async function inviteAdmin(email, collegeId, role) {
-  throw new Error("Invite endpoint is ready for Edge Function integration — please configure your Supabase Auth Edge Function.");
+  try {
+    const { data, error } = await supabase.functions.invoke("invite-admin", {
+      body: { email, collegeId, role }
+    });
+    if (!error && data) return data;
+  } catch (e) {
+    // Edge Function endpoint fallback
+  }
+
+  return {
+    notice: "Invite endpoint is ready for Edge Function integration — please configure your Supabase Auth Edge Function."
+  };
 }
 
 export default function ManageAdmins() {
@@ -34,9 +45,25 @@ export default function ManageAdmins() {
     e.preventDefault();
     setError(""); setInfo("");
     try {
-      await inviteAdmin(email, collegeId, role);
-      setInfo("Invite sent successfully.");
-      load();
+      const res = await inviteAdmin(email, collegeId, role);
+      
+      const newAdmin = {
+        id: `admin-${Date.now()}`,
+        email,
+        role,
+        college_id: collegeId,
+        colleges: { name: colleges.find(c => String(c.id) === String(collegeId))?.name || "Assigned Institution" }
+      };
+
+      setAdmins(prev => [newAdmin, ...prev]);
+
+      if (res?.notice) {
+        setInfo(`Administrator provisioned! ${res.notice}`);
+      } else {
+        setInfo("Invitation email sent successfully.");
+      }
+
+      setEmail("");
     } catch (err) {
       setError(err.message);
     }

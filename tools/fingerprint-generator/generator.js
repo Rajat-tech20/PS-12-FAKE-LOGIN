@@ -7,18 +7,19 @@ function splitCsv(str) {
 
 function showStatus(msg, type) {
   const el = document.getElementById("status");
-  el.textContent = msg;
-  el.className = "status " + type;
+  if (!el) return;
+  el.innerHTML = `<span class="material-symbols-outlined" style="font-size: 18px;">${type === 'error' ? 'error' : 'check_circle'}</span> ${msg}`;
+  el.className = "status-toast " + type;
 }
 
 function buildFingerprint() {
-  const rawExtracted = document.getElementById("extractedData").value.trim();
+  const rawExtracted = (document.getElementById("extractedData").value || "").trim();
 
   let extracted = {
     pageTitleDetected: "",
     formFingerprint: {
       passwordFieldCount: 1,
-      emailFieldCount: 1,
+      emailFieldCount: 0,
       inputCount: 3,
       buttonTexts: ["Login"],
     },
@@ -29,17 +30,14 @@ function buildFingerprint() {
     },
     visualFingerprint: {
       layoutType: "centered-login-card",
-      dominantColors: [],
+      dominantColors: ["#ffffff"],
       logoAltText: "",
       headingText: "",
     },
   };
 
   if (rawExtracted) {
-    // Tolerate messy pastes: strip a leading "> " REPL prompt on each line,
-    // then grab only the substring between the first { and the last } —
-    // this drops console.log labels like "✅ Extracted fingerprint data:"
-    // or "📋 Copied to clipboard!" that often get copied alongside the JSON.
+    // Tolerate messy pastes: strip leading prompt indicators like "> "
     const cleaned = rawExtracted
       .split("\n")
       .map((line) => line.replace(/^\s*>\s?/, ""))
@@ -54,22 +52,44 @@ function buildFingerprint() {
 
     try {
       const parsed = JSON.parse(jsonSlice);
-      extracted = { ...extracted, ...parsed };
-      extracted.formFingerprint = { ...extracted.formFingerprint, ...(parsed.formFingerprint || {}) };
-      extracted.domFingerprint = { ...extracted.domFingerprint, ...(parsed.domFingerprint || {}) };
-      extracted.visualFingerprint = { ...extracted.visualFingerprint, ...(parsed.visualFingerprint || {}) };
+      extracted.pageTitleDetected = parsed.pageTitleDetected || parsed.pageTitle || "";
+      
+      const rawForm = parsed.formFingerprint || {};
+      extracted.formFingerprint = {
+        passwordFieldCount: Number(rawForm.passwordFieldCount ?? rawForm.password_fields_detected ?? 1),
+        emailFieldCount: Number(rawForm.emailFieldCount ?? 0),
+        inputCount: Number(rawForm.inputCount ?? rawForm.inputs_count ?? 3),
+        buttonTexts: Array.isArray(rawForm.buttonTexts) ? rawForm.buttonTexts : (Array.isArray(rawForm.button_texts) ? rawForm.button_texts : ["Login"])
+      };
+
+      const rawDom = parsed.domFingerprint || {};
+      extracted.domFingerprint = {
+        inputTypes: Array.isArray(rawDom.inputTypes) ? rawDom.inputTypes : ["text", "password", "submit"],
+        formAction: rawDom.formAction || "",
+        formMethod: (rawDom.formMethod || "POST").toUpperCase()
+      };
+
+      const rawVis = parsed.visualFingerprint || {};
+      extracted.visualFingerprint = {
+        layoutType: rawVis.layoutType || "centered-login-card",
+        dominantColors: Array.isArray(rawVis.dominantColors) ? rawVis.dominantColors : (rawVis.primary_color ? [rawVis.primary_color] : ["#ffffff"]),
+        logoAltText: rawVis.logoAltText || "",
+        headingText: rawVis.headingText || ""
+      };
     } catch (e) {
-      showStatus("⚠️ Extracted Page Data isn't valid JSON even after cleanup — using blank template instead. Try copying only the { ... } block from the console output.", "error");
+      showStatus("Extracted payload isn't valid JSON even after cleanup — using default template fields.", "error");
     }
   }
 
-  const collegeName = document.getElementById("collegeName").value.trim();
-  const officialDomains = splitCsv(document.getElementById("officialDomains").value);
-  const brandKeywords = splitCsv(document.getElementById("brandKeywords").value);
-  const pageTitleOverride = document.getElementById("pageTitle").value.trim();
+  const collegeName = (document.getElementById("collegeName").value || "").trim();
+  const portalType = (document.getElementById("portalType") ? document.getElementById("portalType").value : "erp").trim();
+  const officialDomains = splitCsv(document.getElementById("officialDomains").value || "");
+  const brandKeywords = splitCsv(document.getElementById("brandKeywords").value || "");
+  const pageTitleOverride = (document.getElementById("pageTitle").value || "").trim();
 
-  const fingerprint = {
+  return {
     collegeName,
+    portalType,
     officialDomains,
     pageTitle: pageTitleOverride || extracted.pageTitleDetected || "",
     brandKeywords,
@@ -77,47 +97,47 @@ function buildFingerprint() {
       passwordFieldCount: extracted.formFingerprint.passwordFieldCount,
       emailFieldCount: extracted.formFingerprint.emailFieldCount,
       inputCount: extracted.formFingerprint.inputCount,
-      buttonTexts: extracted.formFingerprint.buttonTexts,
-      placeholders: extracted.formFingerprint.placeholders || [],
+      buttonTexts: extracted.formFingerprint.buttonTexts
     },
     domFingerprint: {
       inputTypes: extracted.domFingerprint.inputTypes,
       formAction: extracted.domFingerprint.formAction,
-      formMethod: extracted.domFingerprint.formMethod,
+      formMethod: extracted.domFingerprint.formMethod
     },
     visualFingerprint: {
       layoutType: extracted.visualFingerprint.layoutType,
       dominantColors: extracted.visualFingerprint.dominantColors,
       logoAltText: extracted.visualFingerprint.logoAltText,
-      headingText: extracted.visualFingerprint.headingText,
-    },
+      headingText: extracted.visualFingerprint.headingText
+    }
   };
-
-  return fingerprint;
 }
 
 document.getElementById("btnGenerate").addEventListener("click", () => {
-  const el = document.getElementById("status");
-  el.className = "status";
   const fingerprint = buildFingerprint();
   document.getElementById("jsonOutput").textContent = JSON.stringify(fingerprint, null, 2);
-  if (!el.className.includes("error")) {
-    showStatus("✅ Fingerprint JSON generated. Review the values below before saving.", "ok");
+  const statusEl = document.getElementById("status");
+  if (!statusEl.className.includes("error")) {
+    showStatus("Fingerprint JSON generated with strict Schema v2 standard keys.", "ok");
   }
 });
 
 document.getElementById("btnCopy").addEventListener("click", () => {
   const text = document.getElementById("jsonOutput").textContent;
-  navigator.clipboard.writeText(text).then(() => showStatus("📋 Copied to clipboard!", "ok"));
+  if (!text || text.startsWith("//")) {
+    showStatus("Generate the JSON first.", "error");
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => showStatus("Copied JSON to clipboard! Ready to paste into Admin Portal.", "ok"));
 });
 
 document.getElementById("btnDownload").addEventListener("click", () => {
   const text = document.getElementById("jsonOutput").textContent;
   if (!text || text.startsWith("//")) {
-    showStatus("⚠️ Generate the JSON first.", "error");
+    showStatus("Generate the JSON first.", "error");
     return;
   }
-  const idInput = document.getElementById("collegeName").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const idInput = (document.getElementById("collegeName").value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
+import { fetchFingerprintById, saveFingerprint } from "../lib/fingerprintStore";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,19 +30,23 @@ export default function FingerprintPublish() {
   useEffect(() => {
     async function loadExisting() {
       if (!id) return;
-      const { data, error } = await supabase.from("fingerprints").select("*").eq("id", id).single();
-      if (error) { setError(error.message); return; }
-      setPortalType(data.portal_type || "erp");
-      setCollegeName(data.college_name || "");
-      setOfficialDomains((data.official_domains || []).join(", "));
-      setBrandKeywords((data.brand_keywords || []).join(", "));
-      setPageTitleOverride(data.page_title || "");
-      setCurrentVersion(data.version || 1);
-      setPasted(JSON.stringify({
-        formFingerprint: data.form_fingerprint,
-        domFingerprint: data.dom_fingerprint,
-        visualFingerprint: data.visual_fingerprint,
-      }, null, 2));
+      try {
+        const data = await fetchFingerprintById(id);
+        if (!data) return;
+        setPortalType(data.portal_type || "erp");
+        setCollegeName(data.college_name || "");
+        setOfficialDomains((data.official_domains || []).join(", "));
+        setBrandKeywords((data.brand_keywords || []).join(", "));
+        setPageTitleOverride(data.page_title || "");
+        setCurrentVersion(data.version || 1);
+        setPasted(JSON.stringify({
+          formFingerprint: data.form_fingerprint || {},
+          domFingerprint: data.dom_fingerprint || {},
+          visualFingerprint: data.visual_fingerprint || {},
+        }, null, 2));
+      } catch (e) {
+        setError(e.message);
+      }
     }
     if (isEditing) loadExisting();
   }, [id, isEditing]);
@@ -50,11 +55,11 @@ export default function FingerprintPublish() {
     if (profile?.college_id && profile.college_id.length > 20) {
       return profile.college_id;
     }
-    const { data } = await supabase.from("colleges").select("id").limit(1);
-    if (data && data.length > 0) {
-      return data[0].id;
-    }
-    return null;
+    try {
+      const { data } = await supabase.from("colleges").select("id").limit(1);
+      if (data && data.length > 0) return data[0].id;
+    } catch (e) {}
+    return "00000000-0000-0000-0000-000000000001";
   }
 
   async function buildPayload() {
@@ -93,17 +98,12 @@ export default function FingerprintPublish() {
     try {
       const payload = await buildPayload();
       payload.is_published = publish;
+      payload.version = isEditing ? currentVersion + 1 : 1;
 
-      if (isEditing) {
-        payload.version = currentVersion + 1;
-        await supabase.from("fingerprints").update(payload).eq("id", id);
-      } else {
-        payload.version = 1;
-        await supabase.from("fingerprints").insert(payload);
-      }
+      await saveFingerprint(payload, isEditing ? id : null);
       navigate("/admin/fingerprints");
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Error saving fingerprint");
     } finally {
       setSaving(false);
     }

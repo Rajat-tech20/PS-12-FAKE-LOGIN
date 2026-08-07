@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { fetchAllFingerprints } from "../lib/fingerprintStore";
 import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../context/AuthContext";
 
@@ -11,20 +12,22 @@ export default function DashboardHome() {
   useEffect(() => {
     async function loadStats() {
       try {
-        let fpQuery = supabase.from("fingerprints").select("is_published");
-        if (!isSuperAdmin && profile?.college_id) fpQuery = fpQuery.eq("college_id", profile.college_id);
-        const { data: fps } = await fpQuery;
+        const fps = await fetchAllFingerprints(profile?.college_id, isSuperAdmin);
 
         const published = fps?.filter((f) => f.is_published).length || 0;
         const draft = fps?.filter((f) => !f.is_published).length || 0;
 
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-        const { count: scans7d } = await supabase
-          .from("scan_events")
-          .select("*", { count: "exact", head: true })
-          .gte("created_at", sevenDaysAgo);
+        let scans7d = 0;
+        try {
+          const { count } = await supabase
+            .from("scan_events")
+            .select("*", { count: "exact", head: true })
+            .gte("created_at", sevenDaysAgo);
+          scans7d = count || 0;
+        } catch (e) {}
 
-        setStats({ published, draft, scans7d: scans7d || 0 });
+        setStats({ published, draft, scans7d });
       } catch (e) {
         // Fallback
       } finally {

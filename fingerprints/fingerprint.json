@@ -1,48 +1,75 @@
-
-
-{
-  "collegeName": "St. Vincent Pallotti College of Engineering and Technology",
-  "officialDomains": [
-    "https://stvincentngp.edu.in/",
-    "https://erp.stvincentngp.edu.in/login.aspx",
-    "info@stvincentngp.edu.in"
-  ],
-  "pageTitle": "log-CAS_ERP",
-  "brandKeywords": [
-    "St. Vincent Pallotti",
-    "Student Login",
-    "ERP Portal",
-    "Student Portal"
-  ],
-  "formFingerprint": {
-    "passwordFieldCount": 1,
-    "emailFieldCount": 0,
-    "inputCount": 14,
-    "buttonTexts": [
-      "Login",
-      "Reset"
+[
+  {
+    "collegeName": "St. Vincent Pallotti College of Engineering and Technology",
+    "officialDomains": [
+      "https://stvincentngp.edu.in/",
+      "https://erp.stvincentngp.edu.in/login.aspx",
+      "info@stvincentngp.edu.in"
     ],
-    "placeholders": [
-      "Username",
-      "Password"
-    ]
+    "pageTitle": "log-CAS_ERP",
+    "brandKeywords": [
+      "St. Vincent Pallotti",
+      "Student Login",
+      "ERP Portal",
+      "Student Portal"
+    ],
+    "formFingerprint": {
+      "passwordFieldCount": 1,
+      "emailFieldCount": 0,
+      "inputCount": 14,
+      "buttonTexts": [
+        "Login",
+        "Reset"
+      ],
+      "placeholders": [
+        "Username",
+        "Password"
+      ]
+    },
+    "domFingerprint": {
+      "inputTypes": [
+        "hidden",
+        "text",
+        "password",
+        "submit"
+      ],
+      "formAction": "./login.aspx",
+      "formMethod": "POST"
+    },
+    "visualFingerprint": {
+      "layoutType": "centered-login-card",
+      "dominantColors": [
+        "#ffffff"
+      ],
+      "logoAltText": "",
+      "headingText": "College Administration System"
+    }
   },
-  "domFingerprint": {
-    "inputTypes": [
-      "hidden",
-      "text",
-      "password",
-      "submit"
+  {
+    "college_name": "YCCE",
+    "official_domains": [
+      "studentserp.ycce.edu"
     ],
-    "formAction": "./login.aspx",
-    "formMethod": "POST"
-  },
-  "visualFingerprint": {
-    "layoutType": "centered-login-card",
-    "dominantColors": [
-      "#ffffff"
+    "brand_keywords": [
+      "ERP"
     ],
-    "logoAltText": "",
-    "headingText": "College Administration System"
+    "page_title_signature": "Authentication Portal",
+    "dom_fingerprint": {
+      "forms_count": 1,
+      "inputs_count": 3,
+      "password_fields_detected": 1,
+      "has_csrf_token": true
+    },
+    "visual_fingerprint": {
+      "primary_color": "#C9622B",
+      "logo_resemblance_hash": "hash_vp_99831",
+      "font_families": [
+        "Space Grotesk",
+        "sans-serif"
+      ]
+    },
+    "generated_at": "2026-08-06",
+    "engine_version": "1.0.4-SHIELD",
+    "deployment_scope": "Registry-V1"
   }
-}
+]
